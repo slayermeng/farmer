@@ -1,4 +1,4 @@
-package org.farmer.filter;
+package org.farmer.filter.specific;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -22,8 +22,8 @@ import org.apache.hadoop.hbase.client.Get;
 public class PrefixFilterSample {
     public void filter() throws Exception{
         Configuration config = HBaseConfiguration.create();
-        HTable table = new HTable(config,"sms");
-        Filter filter = new PrefixFilter(Bytes.toBytes("row-1"));
+        HTable table = new HTable(config,"testtable");
+        Filter filter = new PrefixFilter(Bytes.toBytes("rk1"));
         Scan scan = new Scan();
         scan.setFilter(filter);
         ResultScanner scanner = table.getScanner(scan);
@@ -33,11 +33,10 @@ public class PrefixFilterSample {
             }
         }
         scanner.close();
-        Get get = new Get(Bytes.toBytes("row-5"));
-        get.setFilter(filter);
-        Result result = table.get(get);
-        for(KeyValue kv:result.raw()){
-          System.out.println("KV:"+kv+",Value:"+Bytes.toString(kv.getValue()));
-        }
+    }
+
+    public static void main(String[] args) throws Exception{
+       PrefixFilterSample pf = new PrefixFilterSample();
+        pf.filter();
     }
 }

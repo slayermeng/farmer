@@ -13,12 +13,12 @@ import java.io.IOException;
  * Date: 13-9-30
  * Time: 下午9:40
  */
-public class HBaseAdminSample {
+public class HBaseAdminFacade {
     public static Configuration conf = HBaseConfiguration.create();
 
     public HBaseAdmin admin;
 
-    public HBaseAdminSample() throws MasterNotRunningException,ZooKeeperConnectionException{
+    public HBaseAdminFacade() throws MasterNotRunningException,ZooKeeperConnectionException{
         admin = new HBaseAdmin(conf);
     }
 
@@ -44,9 +44,9 @@ public class HBaseAdminSample {
     }
 
     public static void main(String[] args) throws Exception{
-        HBaseAdminSample has = new HBaseAdminSample();
+        HBaseAdminFacade has = new HBaseAdminFacade();
         System.out.println("Master Running:"+has.isMasterRunning());//is master running
-        has.createTable("test","f1","f2");
+        has.createTable("testtable","f1","f2");
         System.out.println("test available:"+has.isTableAvailable("test"));
     }
 }

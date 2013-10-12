@@ -1,4 +1,4 @@
-package org.farmer.filter;
+package org.farmer.filter.specific;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -6,6 +6,7 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.KeyValue;
+import java.io.IOException;
 
 /**
  * Created with IntelliJ IDEA.
@@ -17,11 +18,11 @@ import org.apache.hadoop.hbase.KeyValue;
 public class SingleColumnValueFilterSample {
     public void filter() throws Exception{
         Configuration config = HBaseConfiguration.create();
-        HTable table = new HTable(config,"sms");
-        SingleColumnValueFilter filter = new SingleColumnValueFilter(Bytes.toBytes("colfam1"),
-                Bytes.toBytes("col-5"),
-                CompareFilter.CompareOp.NOT_EQUAL,
-                new SubstringComparator("val-5"));
+        HTable table = new HTable(config,"testtable");
+        SingleColumnValueFilter filter = new SingleColumnValueFilter(Bytes.toBytes("f1"),
+                Bytes.toBytes("q1"),
+                CompareFilter.CompareOp.EQUAL,
+                new BinaryComparator(Bytes.toBytes("guanzy")));
         filter.setFilterIfMissing(true);
         Scan scan = new Scan();
         scan.setFilter(filter);
@@ -32,4 +33,10 @@ public class SingleColumnValueFilterSample {
             }
         }
     }
+
+    public static void main(String[] args) throws Exception{
+        SingleColumnValueFilterSample svf = new SingleColumnValueFilterSample();
+        svf.filter();
+    }
+
 }

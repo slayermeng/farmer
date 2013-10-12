@@ -1,4 +1,4 @@
-package org.farmer.filter;
+package org.farmer.filter.specific;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -21,8 +21,8 @@ public class PageFilterSample {
     public void page() throws Exception{
         Configuration config = HBaseConfiguration.create();
         final byte[] POSTFIX = new byte[] { 0x00 };
-        HTable table = new HTable(config,"sms");
-        Filter filter = new PageFilter(15);
+        HTable table = new HTable(config,"testtable");
+        Filter filter = new PageFilter(1);
         int totalRows = 0;
         byte[] lastRow = null;
         while(true){
@@ -48,6 +48,7 @@ public class PageFilterSample {
     }
 
     public static void main(String[] args) throws Exception{
-
+        PageFilterSample pfs = new PageFilterSample();
+        pfs.page();
     }
 }
