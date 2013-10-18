@@ -1,5 +1,8 @@
 package org.farmer.jdbc;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -11,6 +14,8 @@ import java.io.IOException;
 import java.util.jar.Attributes;
 import java.net.URL;
 import java.util.jar.Manifest;
+import java.util.logging.Logger;
+import java.sql.SQLFeatureNotSupportedException;
 
 /**
  * User: mengxin
@@ -18,75 +23,104 @@ import java.util.jar.Manifest;
  * Time: 上午9:31
  */
 public class HBaseDriver implements Driver {
+    private static final Log LOG = LogFactory.getLog(HBaseDriver.class);
+
     static {
         try {
             DriverManager.registerDriver(new HBaseDriver());
         } catch (SQLException e) {
-            throw new RuntimeException("Can't register jdbc!");
+            LOG.error(e);
+            throw new RuntimeException("Can't register jdbc driver!");
         }
     }
 
-    private static final String URL_PREFIX = "jdbc:hbase://";
-
+    /**
+     * Is compliant?
+     */
     private static final boolean JDBC_COMPLIANT = false;
 
-    private static final String DEFAULT_PORT = "10000";
+    /**
+     * jdbc url prefix
+     * jdbc:hbase://localhost:8989
+     */
+    private static final String URL_PREFIX = "jdbc:hbase://";
 
+    /**
+     * jdbc default port
+     */
+    private static final String DEFAULT_PORT = "10004";
+
+    /**
+     * server host prpoerty key
+     */
     private static final String HOST_PROPERTY_KEY = "HOST";
 
+    /**
+     * server port property key
+     */
     private static final String PORT_PROPERTY_KEY = "PORT";
 
-    public HBaseDriver() throws SQLException {
-
-    }
+    public HBaseDriver() throws SQLException {}
 
     public Connection connect(String url, Properties info) throws SQLException {
         return new HBaseConnection(url, info);
     }
 
+    /**
+     * Is url a valid format?
+     * @param url
+     * @return
+     * @throws SQLException
+     */
     public boolean acceptsURL(String url) throws SQLException {
         return Pattern.matches(URL_PREFIX + ".*", url);
     }
 
+    /**
+     * jdbc driver major version
+     * @return
+     * manifest.mf
+     */
     public int getMajorVersion() {
         int version = -1;
         try {
-            String fullVersion = HBaseDriver.fetchManifestAttribute(
-                    Attributes.Name.IMPLEMENTATION_VERSION);
-            String[] tokens = fullVersion.split("\\."); //$NON-NLS-1$
+            String fullVersion = fetchFullVersion();
+            String[] tokens = fullVersion.split("\\.");
 
             if (tokens != null && tokens.length > 0 && tokens[0] != null) {
                 version = Integer.parseInt(tokens[0]);
             }
         } catch (Exception e) {
-            // Possible reasons to end up here:
-            // - Unable to read version from manifest.mf
-            // - Version string is not in the proper X.x.xxx format
             version = -1;
         }
         return version;
     }
 
+    /**
+     * jdbc driver minor version
+     * @return
+     * manifest.mf
+     */
     public int getMinorVersion() {
         int version = -1;
         try {
-            String fullVersion = HBaseDriver.fetchManifestAttribute(
-                    Attributes.Name.IMPLEMENTATION_VERSION);
-            String[] tokens = fullVersion.split("\\."); //$NON-NLS-1$
+            String fullVersion = fetchFullVersion();
+            String[] tokens = fullVersion.split("\\.");
 
             if (tokens != null && tokens.length > 1 && tokens[1] != null) {
                 version = Integer.parseInt(tokens[1]);
             }
         } catch (Exception e) {
-            // Possible reasons to end up here:
-            // - Unable to read version from manifest.mf
-            // - Version string is not in the proper X.x.xxx format
             version = -1;
         }
         return version;
     }
 
     private static Attributes manifestAttributes = null;
+
+    private String fetchFullVersion() throws SQLException{
+        return HBaseDriver.fetchManifestAttribute(Attributes.Name.IMPLEMENTATION_VERSION);
+    }
 
     private static synchronized void loadManifestAttributes() throws IOException {
         if (manifestAttributes != null) {
@@ -118,8 +152,6 @@ public class HBaseDriver implements Driver {
     private Properties parseURL(String url, Properties defaults) throws SQLException {
         Properties urlProps = (defaults != null) ? new Properties(defaults)
                 : new Properties();
-
-        //jdbc url格式检查
         if (url == null || !url.startsWith(URL_PREFIX)) {
             throw new SQLException("Invalid connection url: " + url);
         }
@@ -128,15 +160,15 @@ public class HBaseDriver implements Driver {
             return urlProps;
         }
 
-        // [hostname]:[port]/[db_name]
+        // [hostname]:[port]
         String connectionInfo = url.substring(URL_PREFIX.length());
 
-        // [hostname]:[port] [db_name]
-        String[] hostPortAndDatabase = connectionInfo.split("/", 2);
+        // [hostname]:[port]
+        String[] hostPort = connectionInfo.split("/", 2);
 
         // [hostname]:[port]
-        if (hostPortAndDatabase[0].length() > 0) {
-            String[] hostAndPort = hostPortAndDatabase[0].split(":", 2);
+        if (hostPort[0].length() > 0) {
+            String[] hostAndPort = hostPort[0].split(":", 2);
             urlProps.put(HOST_PROPERTY_KEY, hostAndPort[0]);
             if (hostAndPort.length > 1) {
                 urlProps.put(PORT_PROPERTY_KEY, hostAndPort[1]);
@@ -167,11 +199,20 @@ public class HBaseDriver implements Driver {
         portProp.required = false;
         portProp.description = "Port number of HBase Server";
 
-        DriverPropertyInfo[] dpi = new DriverPropertyInfo[3];
+        DriverPropertyInfo[] dpi = new DriverPropertyInfo[2];
 
         dpi[0] = hostProp;
         dpi[1] = portProp;
 
         return dpi;
+    }
+
+    /**
+     * for jdk1.7
+     * @return
+     * @throws SQLException
+     */
+    public Logger getParentLogger() throws SQLException{
+        throw new SQLFeatureNotSupportedException("Method not supported");
     }
 }

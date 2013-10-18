@@ -4,6 +4,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.coprocessor.RegionObserver;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.PageFilter;
@@ -11,11 +12,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.client.Result;
 
 /**
- * Created with IntelliJ IDEA.
  * User: mengxin
  * Date: 13-9-22
  * Time: 下午1:22
- * To change this template use File | Settings | File Templates.
  */
 public class PageFilterSample {
     public void page() throws Exception{

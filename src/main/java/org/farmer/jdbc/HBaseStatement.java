@@ -1,6 +1,9 @@
 package org.farmer.jdbc;
 
+import org.farmer.service.JdbcService;
+
 import java.sql.*;
+import org.apache.thrift.TException;
 
 /**
  * Created with IntelliJ IDEA.
@@ -10,214 +13,208 @@ import java.sql.*;
  * To change this template use File | Settings | File Templates.
  */
 public class HBaseStatement implements Statement {
+    private JdbcService.Iface client;
 
-    @Override
-    public ResultSet executeQuery(String s) throws SQLException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    private boolean isClosed = false;
+
+    private ResultSet resultSet = null;
+
+    private int fetchSize = 50;
+
+    private int maxRows=0;
+
+    public HBaseStatement(JdbcService.Iface client){
+        this.client = client;
     }
 
-    @Override
-    public int executeUpdate(String s) throws SQLException {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    public ResultSet executeQuery(String sql) throws SQLException {
+        if (isClosed) {
+            throw new SQLException("Can't execute after statement has been closed");
+        }
+
+        try{
+            resultSet = null;
+            client.execute(sql);
+        }catch(TException ex){
+            throw new SQLException(ex.toString(), "08S01");
+        }
+
+        resultSet = new HBaseResultSet(client, maxRows);
+        resultSet.setFetchSize(fetchSize);
+        return resultSet;
     }
 
-    @Override
+    public int executeUpdate(String sql) throws SQLException {
+        try {
+            client.execute(sql);
+        } catch (Exception ex) {
+            throw new SQLException(ex.toString());
+        }
+        return 0;
+    }
+
     public void close() throws SQLException {
-        //To change body of implemented methods use File | Settings | File Templates.
+        client = null;
+        resultSet = null;
+        isClosed = true;
     }
 
-    @Override
     public int getMaxFieldSize() throws SQLException {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public void setMaxFieldSize(int i) throws SQLException {
-        //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public int getMaxRows() throws SQLException {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        return maxRows;
     }
 
-    @Override
-    public void setMaxRows(int i) throws SQLException {
-        //To change body of implemented methods use File | Settings | File Templates.
+    public void setMaxRows(int max) throws SQLException {
+        if (max < 0) {
+            throw new SQLException("max must be >= 0");
+        }
+        maxRows = max;
     }
 
-    @Override
     public void setEscapeProcessing(boolean b) throws SQLException {
-        //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public int getQueryTimeout() throws SQLException {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public void setQueryTimeout(int i) throws SQLException {
-        //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public void cancel() throws SQLException {
-        //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public SQLWarning getWarnings() throws SQLException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public void clearWarnings() throws SQLException {
-        //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public void setCursorName(String s) throws SQLException {
-        //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
-    public boolean execute(String s) throws SQLException {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+    public boolean execute(String sql) throws SQLException {
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public ResultSet getResultSet() throws SQLException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return resultSet;
     }
 
-    @Override
     public int getUpdateCount() throws SQLException {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        return 0;
     }
 
-    @Override
     public boolean getMoreResults() throws SQLException {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
-    public void setFetchDirection(int i) throws SQLException {
-        //To change body of implemented methods use File | Settings | File Templates.
+    public void setFetchDirection(int rows) throws SQLException {
+        fetchSize = rows;
     }
 
-    @Override
     public int getFetchDirection() throws SQLException {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public void setFetchSize(int i) throws SQLException {
-        //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public int getFetchSize() throws SQLException {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        return fetchSize;
     }
 
-    @Override
     public int getResultSetConcurrency() throws SQLException {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public int getResultSetType() throws SQLException {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public void addBatch(String s) throws SQLException {
-        //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public void clearBatch() throws SQLException {
-        //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public int[] executeBatch() throws SQLException {
-        return new int[0];  //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public Connection getConnection() throws SQLException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public boolean getMoreResults(int i) throws SQLException {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public ResultSet getGeneratedKeys() throws SQLException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public int executeUpdate(String s, int i) throws SQLException {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public int executeUpdate(String s, int[] ints) throws SQLException {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public int executeUpdate(String s, String[] strings) throws SQLException {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public boolean execute(String s, int i) throws SQLException {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public boolean execute(String s, int[] ints) throws SQLException {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public boolean execute(String s, String[] strings) throws SQLException {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public int getResultSetHoldability() throws SQLException {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public boolean isClosed() throws SQLException {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+        return isClosed;
     }
 
-    @Override
     public void setPoolable(boolean b) throws SQLException {
-        //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public boolean isPoolable() throws SQLException {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public <T> T unwrap(Class<T> tClass) throws SQLException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 
-    @Override
     public boolean isWrapperFor(Class<?> aClass) throws SQLException {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new SQLException("Method not supported");
     }
 }
