@@ -1,14 +1,32 @@
 package org.farmer.jdbc;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.farmer.service.JdbcService;
 
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.*;
+import java.sql.Ref;
+import java.sql.Clob;
+import java.sql.Blob;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.ResultSet;
+import java.sql.RowId;
+import java.sql.Array;
+import java.sql.Date;
+import java.sql.NClob;
+import java.sql.Time;
+import java.sql.SQLXML;
+import java.sql.Statement;
+import java.sql.SQLWarning;
+import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Map;
+import java.util.List;
+import java.util.Arrays;
 
 /**
  * Created with IntelliJ IDEA.
@@ -18,28 +36,60 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class HBaseResultSet implements ResultSet {
-    public HBaseResultSet(JdbcService.Iface client,int maxRows){
+    private static final Log LOG = LogFactory.getLog(HBaseResultSet.class);
 
+    private JdbcService.Iface client;
+
+    private  int maxRows = 0;
+
+    protected boolean wasNull = false;
+
+    protected List<Object> row;
+
+    protected List<String> columnNames;
+
+    protected List<String> columnTypes;
+
+    public HBaseResultSet(JdbcService.Iface client,int maxRows){
+        this.client = client;
+        this.maxRows = maxRows;
+        row = Arrays.asList(new Object[columnNames.size()]);
     }
 
+    //TODO get方法实现
     public boolean next() throws SQLException {
         return false;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     public void close() throws SQLException {
-        //To change body of implemented methods use File | Settings | File Templates.
+        client = null;
     }
 
     public boolean wasNull() throws SQLException {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+        return wasNull;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
-    public String getString(int i) throws SQLException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public String getString(int columnIndex) throws SQLException {
+        Object obj = getObject(columnIndex);
+        if (obj == null) {
+            return null;
+        }
+
+        return obj.toString();
     }
 
-    public boolean getBoolean(int i) throws SQLException {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+    public boolean getBoolean(int columnIndex) throws SQLException {
+        Object obj = getObject(columnIndex);
+        if (Boolean.class.isInstance(obj)) {
+            return (Boolean) obj;
+        } else if (obj == null) {
+            return false;
+        } else if (Number.class.isInstance(obj)) {
+            return ((Number) obj).intValue() != 0;
+        } else if (String.class.isInstance(obj)) {
+            return !((String) obj).equals("0");
+        }
+        throw new SQLException("Cannot convert column " + columnIndex + " to boolean");
     }
 
     public byte getByte(int i) throws SQLException {
@@ -178,8 +228,25 @@ public class HBaseResultSet implements ResultSet {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
-    public Object getObject(int i) throws SQLException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public Object getObject(int columnIndex) throws SQLException {
+        if (row == null) {
+            throw new SQLException("No row found.");
+        }
+
+        if (columnIndex > row.size()) {
+            throw new SQLException("Invalid columnIndex: " + columnIndex);
+        }
+
+        try {
+            wasNull = false;
+            if (row.get(columnIndex - 1) == null) {
+                wasNull = true;
+            }
+
+            return row.get(columnIndex - 1);
+        } catch (Exception e) {
+            throw new SQLException(e.toString());
+        }
     }
 
     public Object getObject(String s) throws SQLException {

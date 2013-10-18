@@ -7,15 +7,15 @@ import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Connection;
-import java.util.Properties;
 import java.sql.DriverPropertyInfo;
+import java.sql.SQLFeatureNotSupportedException;
+import java.util.Properties;
 import java.util.regex.Pattern;
-import java.io.IOException;
 import java.util.jar.Attributes;
-import java.net.URL;
 import java.util.jar.Manifest;
 import java.util.logging.Logger;
-import java.sql.SQLFeatureNotSupportedException;
+import java.io.IOException;
+import java.net.URL;
 
 /**
  * User: mengxin
@@ -60,7 +60,8 @@ public class HBaseDriver implements Driver {
      */
     private static final String PORT_PROPERTY_KEY = "PORT";
 
-    public HBaseDriver() throws SQLException {}
+    public HBaseDriver() throws SQLException {
+    }
 
     public Connection connect(String url, Properties info) throws SQLException {
         return new HBaseConnection(url, info);
@@ -68,6 +69,7 @@ public class HBaseDriver implements Driver {
 
     /**
      * Is url a valid format?
+     *
      * @param url
      * @return
      * @throws SQLException
@@ -78,8 +80,8 @@ public class HBaseDriver implements Driver {
 
     /**
      * jdbc driver major version
-     * @return
-     * manifest.mf
+     *
+     * @return manifest.mf
      */
     public int getMajorVersion() {
         int version = -1;
@@ -98,8 +100,8 @@ public class HBaseDriver implements Driver {
 
     /**
      * jdbc driver minor version
-     * @return
-     * manifest.mf
+     *
+     * @return manifest.mf
      */
     public int getMinorVersion() {
         int version = -1;
@@ -118,7 +120,7 @@ public class HBaseDriver implements Driver {
 
     private static Attributes manifestAttributes = null;
 
-    private String fetchFullVersion() throws SQLException{
+    private String fetchFullVersion() throws SQLException {
         return HBaseDriver.fetchManifestAttribute(Attributes.Name.IMPLEMENTATION_VERSION);
     }
 
@@ -209,10 +211,11 @@ public class HBaseDriver implements Driver {
 
     /**
      * for jdk1.7
+     *
      * @return
      * @throws SQLException
      */
-    public Logger getParentLogger() throws SQLException{
+    public Logger getParentLogger() throws SQLException {
         throw new SQLFeatureNotSupportedException("Method not supported");
     }
 }

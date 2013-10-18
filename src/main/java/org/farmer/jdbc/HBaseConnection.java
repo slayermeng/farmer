@@ -6,6 +6,7 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.TException;
+
 import java.util.concurrent.Executor;
 import java.sql.*;
 import java.util.Map;
@@ -30,28 +31,28 @@ public class HBaseConnection implements Connection {
 
     private static final String URL_PREFIX = "jdbc:hbase://";
 
-    public HBaseConnection(String url, Properties info) throws SQLException{
-        if(!url.startsWith(URL_PREFIX)){
-            throw new SQLException("Invalid URL:"+url,"08S01");
+    public HBaseConnection(String url, Properties info) throws SQLException {
+        if (!url.startsWith(URL_PREFIX)) {
+            throw new SQLException("Invalid URL:" + url, "08S01");
         }
 
         url = url.substring(URL_PREFIX.length());
-        if(!url.isEmpty()){
+        if (!url.isEmpty()) {
             String[] hostport = url.split(":");
             int port = 10004;
             String host = hostport[0];
-            try{
+            try {
                 port = Integer.parseInt(hostport[1]);
-            }catch(Exception e){
-                throw new SQLException("Invalid Port:"+port,"08S01");
+            } catch (Exception e) {
+                throw new SQLException("Invalid Port:" + port, "08S01");
             }
-            TTransport transport = new TSocket(host,port);
+            TTransport transport = new TSocket(host, port);
             TProtocol protocol = new TBinaryProtocol(transport);
             //TODO init client
             client = new Client(protocol);
-            try{
+            try {
                 transport.open();
-            }catch(TTransportException e){
+            } catch (TTransportException e) {
                 throw new SQLException("Could not establish connection to "
                         + url + ": " + e.getMessage(), "08S01");
             }
@@ -61,6 +62,7 @@ public class HBaseConnection implements Connection {
 
     /**
      * for jdk1.7
+     *
      * @param executor
      * @throws SQLException
      */
@@ -70,6 +72,7 @@ public class HBaseConnection implements Connection {
 
     /**
      * for jdk1.7
+     *
      * @return
      * @throws SQLException
      */
@@ -79,6 +82,7 @@ public class HBaseConnection implements Connection {
 
     /**
      * for jdk1.7
+     *
      * @param executor
      * @param milliseconds
      * @throws SQLException
@@ -103,7 +107,7 @@ public class HBaseConnection implements Connection {
     }
 
     public PreparedStatement prepareStatement(String sql) throws SQLException {
-        return new HBasePreparedStatement(sql,client);
+        return new HBasePreparedStatement(sql, client);
     }
 
     public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
