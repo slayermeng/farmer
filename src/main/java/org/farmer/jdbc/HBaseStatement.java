@@ -6,11 +6,9 @@ import java.sql.*;
 import org.apache.thrift.TException;
 
 /**
- * Created with IntelliJ IDEA.
  * User: mengxin
  * Date: 13-10-10
  * Time: 上午10:07
- * To change this template use File | Settings | File Templates.
  */
 public class HBaseStatement implements Statement {
     private JdbcService.Iface client;

@@ -27,6 +27,7 @@ import java.util.Calendar;
 import java.util.Map;
 import java.util.List;
 import java.util.Arrays;
+import java.util.Iterator;
 
 /**
  * Created with IntelliJ IDEA.
@@ -50,6 +51,14 @@ public class HBaseResultSet implements ResultSet {
 
     protected List<String> columnTypes;
 
+    private int rowsFetched = 0;
+
+    private int fetchSize = 50;
+
+    private List<String> fetchedRows;
+
+    private Iterator<String> fetchedRowsItr;
+
     public HBaseResultSet(JdbcService.Iface client,int maxRows){
         this.client = client;
         this.maxRows = maxRows;
@@ -58,7 +67,54 @@ public class HBaseResultSet implements ResultSet {
 
     //TODO get方法实现
     public boolean next() throws SQLException {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+//        if (maxRows > 0 && rowsFetched >= maxRows) {
+//            return false;
+//        }
+//
+//        try {
+//            if (fetchedRows == null || !fetchedRowsItr.hasNext()) {
+//                fetchedRows = client.fetchN(fetchSize);
+//                fetchedRowsItr = fetchedRows.iterator();
+//            }
+//
+//            String rowStr = "";
+//            if (fetchedRowsItr.hasNext()) {
+//                rowStr = fetchedRowsItr.next();
+//            } else {
+//                return false;
+//            }
+//
+//            rowsFetched++;
+//            if (LOG.isDebugEnabled()) {
+//                LOG.debug("Fetched row string: " + rowStr);
+//            }
+//
+//            StructObjectInspector soi = (StructObjectInspector) serde.getObjectInspector();
+//            List<? extends StructField> fieldRefs = soi.getAllStructFieldRefs();
+//            Object data = serde.deserialize(new BytesWritable(rowStr.getBytes()));
+//
+//            assert row.size() == fieldRefs.size() : row.size() + ", " + fieldRefs.size();
+//            for (int i = 0; i < fieldRefs.size(); i++) {
+//                StructField fieldRef = fieldRefs.get(i);
+//                ObjectInspector oi = fieldRef.getFieldObjectInspector();
+//                Object obj = soi.getStructFieldData(data, fieldRef);
+//                row.set(i, convertLazyToJava(obj, oi));
+//            }
+//
+//            if (LOG.isDebugEnabled()) {
+//                LOG.debug("Deserialized row: " + row);
+//            }
+//        } catch (HiveServerException e) {
+//            if (e.getErrorCode() == 0) { // error code == 0 means reached the EOF
+//                return false;
+//            } else {
+//                throw new SQLException("Error retrieving next row", e);
+//            }
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//            throw new SQLException("Error retrieving next row", ex);
+//        }
+        return true;
     }
 
     public void close() throws SQLException {

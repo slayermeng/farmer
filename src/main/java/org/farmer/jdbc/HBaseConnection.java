@@ -5,7 +5,6 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
-import org.apache.thrift.TException;
 
 import java.util.concurrent.Executor;
 import java.sql.*;
@@ -16,11 +15,9 @@ import org.farmer.service.JdbcService.Client;
 import org.farmer.service.JdbcService.Iface;
 
 /**
- * Created with IntelliJ IDEA.
  * User: mengxin
  * Date: 13-10-10
  * Time: 上午10:01
- * To change this template use File | Settings | File Templates.
  */
 public class HBaseConnection implements Connection {
     private TTransport transport;
@@ -48,7 +45,6 @@ public class HBaseConnection implements Connection {
             }
             TTransport transport = new TSocket(host, port);
             TProtocol protocol = new TBinaryProtocol(transport);
-            //TODO init client
             client = new Client(protocol);
             try {
                 transport.open();

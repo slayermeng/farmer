@@ -42,9 +42,10 @@ public class PutSample {
     public static void main(String[] args) throws IOException{
         PutSample put = new PutSample("testtable");
         put.insert("rk1","f1","q1","mengxin");
-        put.insert("rk1","f2","q2","30");
+        put.insert("rk1","f1","q2","30");
         put.insert("rk2","f1","q1","guanzy");
-        put.insert("rk2","f2","q2","31");
+        put.insert("rk2","f1","q2","31");
+
 
 //        Get get = new Get(Bytes.toBytes("r1"));
 //        Result res1 = table.get(get);
