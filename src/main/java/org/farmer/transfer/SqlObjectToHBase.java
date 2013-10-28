@@ -1,13 +1,9 @@
 package org.farmer.transfer;
 
-import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
-import net.sf.jsqlparser.parser.CCJSqlParserManager;
 import net.sf.jsqlparser.statement.select.PlainSelect;
-import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectItem;
-import net.sf.jsqlparser.statement.select.WithItem;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.KeyValue;
@@ -18,8 +14,7 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.farmer.coprocessor.AggregationOperator;
-
-import java.io.StringReader;
+import java.sql.SQLSyntaxErrorException;
 import java.util.ArrayList;
 import java.util.List;
 import java.io.IOException;
@@ -30,10 +25,7 @@ import java.io.IOException;
  * Time: 上午10:41
  */
 public class SqlObjectToHBase {
-    CCJSqlParserManager parserManager = new CCJSqlParserManager();
-
     Configuration config = HBaseConfiguration.create();
-
 
     public List scan(PlainSelect plainSelect){
         List result = new ArrayList();
@@ -41,12 +33,22 @@ public class SqlObjectToHBase {
             result = construct(plainSelect);
         }catch(IOException e){
             e.printStackTrace();
+        }catch(SQLSyntaxErrorException e){
+            e.printStackTrace();
         }
         return result;
     }
 
-    public List construct(PlainSelect select) throws IOException{
-        HTable table = new HTable(config,select.getFromItem().toString());
+    public String getTableName(PlainSelect select) throws SQLSyntaxErrorException{
+        String tableName = select.getFromItem().toString();
+        if(tableName==null){
+            throw new SQLSyntaxErrorException();
+        }
+        return tableName;
+    }
+
+    public List construct(PlainSelect select) throws IOException,SQLSyntaxErrorException{
+        HTable table = new HTable(config,getTableName(select));
         Scan scan = new Scan();
         //item处理
         List<SelectItem> items = select.getSelectItems();
