@@ -1,9 +1,6 @@
 package org.farmer.service;
 
-import org.farmer.sqlparser.SqlParser;
-
-import java.io.StringReader;
-import java.util.List;
+import org.farmer.parser.CommanderDispatcher;
 
 /**
  * Created with IntelliJ IDEA.
@@ -13,7 +10,7 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class JdbcServiceImpl implements JdbcService.Iface{
-    SqlParser parser = new SqlParser();
+    CommanderDispatcher parser = new CommanderDispatcher();
 
     public String execute(String sql){
         try{

@@ -50,6 +50,8 @@ public class SqlObjectToHBase {
     public List construct(PlainSelect select) throws IOException,SQLSyntaxErrorException{
         HTable table = new HTable(config,getTableName(select));
         Scan scan = new Scan();
+        scan.setStartRow(Bytes.toBytes("123"));
+        scan.setStopRow(Bytes.toBytes("1234"));
         //item处理
         List<SelectItem> items = select.getSelectItems();
         List resultItem = new ArrayList();
@@ -95,7 +97,6 @@ public class SqlObjectToHBase {
                 }
             }
         }
-
         System.out.println("agg结果:"+resultItem.size());
 
         //结果处理
