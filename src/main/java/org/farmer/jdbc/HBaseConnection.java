@@ -5,19 +5,32 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
-
-import java.util.concurrent.Executor;
-import java.sql.*;
-import java.util.Map;
-import java.util.Properties;
-
 import org.farmer.service.JdbcService.Client;
 import org.farmer.service.JdbcService.Iface;
 
+import java.sql.Connection;
+import java.sql.SQLWarning;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.SQLFeatureNotSupportedException;
+import java.sql.PreparedStatement;
+import java.sql.CallableStatement;
+import java.sql.DatabaseMetaData;
+import java.sql.Savepoint;
+import java.sql.NClob;
+import java.sql.SQLXML;
+import java.sql.Clob;
+import java.sql.Blob;
+import java.sql.SQLClientInfoException;
+import java.sql.Array;
+import java.sql.Struct;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.Executor;
+
 /**
- * User: mengxin
- * Date: 13-10-10
- * Time: 上午10:01
+ * Implement java.sql.Connection
+ * HBase Connection
  */
 public class HBaseConnection implements Connection {
     private TTransport transport;
@@ -26,33 +39,40 @@ public class HBaseConnection implements Connection {
 
     private boolean isClosed = true;
 
-    private static final String URL_PREFIX = "jdbc:hbase://";
+    private SQLWarning warningChain = null;
 
+    /**
+     * connect to server by thrift
+     *
+     * @param url
+     * @param info
+     * @throws SQLException
+     */
     public HBaseConnection(String url, Properties info) throws SQLException {
-        if (!url.startsWith(URL_PREFIX)) {
+        if (url != null && !url.startsWith(ConstantDriver.URI_PREFIX)) {
             throw new SQLException("Invalid URL:" + url, "08S01");
         }
 
-        url = url.substring(URL_PREFIX.length());
-        if (!url.isEmpty()) {
-            String[] hostport = url.split(":");
-            int port = 10004;
-            String host = hostport[0];
-            try {
-                port = Integer.parseInt(hostport[1]);
-            } catch (Exception e) {
-                throw new SQLException("Invalid Port:" + port, "08S01");
-            }
-            TTransport transport = new TSocket(host, port);
-            TProtocol protocol = new TBinaryProtocol(transport);
-            client = new Client(protocol);
-            try {
-                transport.open();
-            } catch (TTransportException e) {
-                throw new SQLException("Could not establish connection to "
-                        + url + ": " + e.getMessage(), "08S01");
-            }
+        url = url.substring(ConstantDriver.URI_PREFIX.length());
+        String[] hostport = url.split(":");
+        int port = 10004;//default port
+        String host = hostport[0];
+        try {
+            port = Integer.parseInt(hostport[1]);
+        } catch (Exception e) {
+            throw new SQLException("Invalid Port:" + port, "08S01");
         }
+        TTransport transport = new TSocket(host, port);
+        TProtocol protocol = new TBinaryProtocol(transport);
+        client = new Client(protocol);
+        try {
+            transport.open();
+        } catch (TTransportException e) {
+            throw new SQLException("Could not establish connection to "
+                    + url + ": " + e.getMessage(), "08S01");
+        }
+        //todo 验证用户名密码是否允许建立连接y
+
         isClosed = false;
     }
 
@@ -63,7 +83,7 @@ public class HBaseConnection implements Connection {
      * @throws SQLException
      */
     public void abort(Executor executor) throws SQLException {
-        throw new SQLException("Method not supported");
+        throw new SQLFeatureNotSupportedException("Method not supported");
     }
 
     /**
@@ -73,7 +93,7 @@ public class HBaseConnection implements Connection {
      * @throws SQLException
      */
     public int getNetworkTimeout() throws SQLException {
-        throw new SQLException("Method not supported");
+        throw new SQLFeatureNotSupportedException("Method not supported");
     }
 
     /**
@@ -84,7 +104,7 @@ public class HBaseConnection implements Connection {
      * @throws SQLException
      */
     public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
-        throw new SQLException("Method not supported");
+        throw new SQLFeatureNotSupportedException("Method not supported");
     }
 
     public Statement createStatement() throws SQLException {
@@ -150,8 +170,10 @@ public class HBaseConnection implements Connection {
         throw new SQLException("Method not supported");
     }
 
-    public void close() throws SQLException {
+    //todo 如何安全的关闭连接?
+    public void close() {
         if (!isClosed) {
+            isClosed = true;
             if (transport != null) {
                 transport.close();
             }
@@ -172,7 +194,7 @@ public class HBaseConnection implements Connection {
     }
 
     public boolean isReadOnly() throws SQLException {
-        throw new SQLException("Method not supported");
+        return false;
     }
 
     public void setCatalog(String s) throws SQLException {
@@ -180,7 +202,7 @@ public class HBaseConnection implements Connection {
     }
 
     public String getCatalog() throws SQLException {
-        throw new SQLException("Method not supported");
+        return "";
     }
 
     public void setTransactionIsolation(int i) throws SQLException {
@@ -192,11 +214,11 @@ public class HBaseConnection implements Connection {
     }
 
     public SQLWarning getWarnings() throws SQLException {
-        throw new SQLException("Method not supported");
+        return warningChain;
     }
 
     public void clearWarnings() throws SQLException {
-        throw new SQLException("Method not supported");
+        warningChain = null;
     }
 
     public CallableStatement prepareCall(String s, int i, int i2) throws SQLException {

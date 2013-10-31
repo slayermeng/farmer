@@ -2,13 +2,16 @@ package org.farmer.jdbc;
 
 import org.farmer.service.JdbcService;
 
-import java.sql.*;
+import java.sql.SQLWarning;
+import java.sql.Statement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Connection;
+
 import org.apache.thrift.TException;
 
 /**
- * User: mengxin
- * Date: 13-10-10
- * Time: 上午10:07
+ * Implement java.sql.Statement
  */
 public class HBaseStatement implements Statement {
     private JdbcService.Iface client;
@@ -21,6 +24,8 @@ public class HBaseStatement implements Statement {
 
     private int maxRows=0;
 
+    private SQLWarning warningChain = null;
+
     public HBaseStatement(JdbcService.Iface client){
         this.client = client;
     }
@@ -29,7 +34,6 @@ public class HBaseStatement implements Statement {
         if (isClosed) {
             throw new SQLException("Can't execute after statement has been closed");
         }
-
         try{
             resultSet = null;
             client.execute(sql);
@@ -43,12 +47,7 @@ public class HBaseStatement implements Statement {
     }
 
     public int executeUpdate(String sql) throws SQLException {
-        try {
-            client.execute(sql);
-        } catch (Exception ex) {
-            throw new SQLException(ex.toString());
-        }
-        return 0;
+        throw new SQLException("Method not supported");
     }
 
     public void close() throws SQLException {
@@ -97,7 +96,7 @@ public class HBaseStatement implements Statement {
     }
 
     public void clearWarnings() throws SQLException {
-        throw new SQLException("Method not supported");
+        warningChain = null;
     }
 
     public void setCursorName(String s) throws SQLException {
@@ -105,7 +104,9 @@ public class HBaseStatement implements Statement {
     }
 
     public boolean execute(String sql) throws SQLException {
-        throw new SQLException("Method not supported");
+        //todo excute含义较多，对于Select看结果集是否为null,如果是其它操作看影响的条数是否为0
+        ResultSet rs = executeQuery(sql);
+        return rs != null;
     }
 
     public ResultSet getResultSet() throws SQLException {
@@ -121,15 +122,15 @@ public class HBaseStatement implements Statement {
     }
 
     public void setFetchDirection(int rows) throws SQLException {
-        fetchSize = rows;
+        throw new SQLException("Method not supported");
     }
 
     public int getFetchDirection() throws SQLException {
         throw new SQLException("Method not supported");
     }
 
-    public void setFetchSize(int i) throws SQLException {
-        throw new SQLException("Method not supported");
+    public void setFetchSize(int rows) throws SQLException {
+        fetchSize = rows;
     }
 
     public int getFetchSize() throws SQLException {
@@ -213,6 +214,14 @@ public class HBaseStatement implements Statement {
     }
 
     public boolean isWrapperFor(Class<?> aClass) throws SQLException {
+        throw new SQLException("Method not supported");
+    }
+
+    /**
+     * for jdk1.7
+     * @throws SQLException
+     */
+    public void closeOnCompletion() throws SQLException {
         throw new SQLException("Method not supported");
     }
 }

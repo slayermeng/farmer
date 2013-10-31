@@ -2,7 +2,6 @@ package org.farmer.jdbc;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -18,16 +17,15 @@ import java.io.IOException;
 import java.net.URL;
 
 /**
- * User: mengxin
- * Date: 13-10-10
- * Time: 上午9:31
+ * Implement java.sql.Driver
+ * Hbase Jdbc Driver support jdk1.7
  */
 public class HBaseDriver implements Driver {
     private static final Log LOG = LogFactory.getLog(HBaseDriver.class);
 
     static {
         try {
-            DriverManager.registerDriver(new HBaseDriver());
+            DriverManager.registerDriver(new HBaseDriver());//register Driver to DriverManager
         } catch (SQLException e) {
             LOG.error(e);
             throw new RuntimeException("Can't register jdbc driver!");
@@ -38,12 +36,6 @@ public class HBaseDriver implements Driver {
      * Is compliant?
      */
     private static final boolean JDBC_COMPLIANT = false;
-
-    /**
-     * jdbc url prefix
-     * jdbc:hbase://localhost:8989
-     */
-    private static final String URL_PREFIX = "jdbc:hbase://";
 
     /**
      * jdbc default port
@@ -60,28 +52,39 @@ public class HBaseDriver implements Driver {
      */
     private static final String PORT_PROPERTY_KEY = "PORT";
 
-    public HBaseDriver() throws SQLException {
-    }
+    private static Attributes manifestAttributes = null;
 
+    /**
+     * Default Constructor
+     * @throws SQLException
+     */
+    public HBaseDriver() throws SQLException {}
+
+    /**
+     * Create HBaseConnection Instance
+     * @param url
+     * @param info
+     * @return
+     * @throws SQLException
+     */
     public Connection connect(String url, Properties info) throws SQLException {
+        //info key1:user key2:password
         return new HBaseConnection(url, info);
     }
 
     /**
      * Is url a valid format?
-     *
      * @param url
      * @return
      * @throws SQLException
      */
     public boolean acceptsURL(String url) throws SQLException {
-        return Pattern.matches(URL_PREFIX + ".*", url);
+        return Pattern.matches(ConstantDriver.URI_PREFIX + ".*", url);
     }
 
     /**
-     * jdbc driver major version
-     *
-     * @return manifest.mf
+     * Jdbc driver major version
+     * manifest.mf
      */
     public int getMajorVersion() {
         int version = -1;
@@ -101,7 +104,7 @@ public class HBaseDriver implements Driver {
     /**
      * jdbc driver minor version
      *
-     * @return manifest.mf
+     * manifest.mf
      */
     public int getMinorVersion() {
         int version = -1;
@@ -117,8 +120,6 @@ public class HBaseDriver implements Driver {
         }
         return version;
     }
-
-    private static Attributes manifestAttributes = null;
 
     private String fetchFullVersion() throws SQLException {
         return HBaseDriver.fetchManifestAttribute(Attributes.Name.IMPLEMENTATION_VERSION);
@@ -137,7 +138,7 @@ public class HBaseDriver implements Driver {
         manifestAttributes = manifest.getMainAttributes();
     }
 
-    static String fetchManifestAttribute(Attributes.Name attributeName)
+    private static String fetchManifestAttribute(Attributes.Name attributeName)
             throws SQLException {
         try {
             loadManifestAttributes();
@@ -154,21 +155,21 @@ public class HBaseDriver implements Driver {
     private Properties parseURL(String url, Properties defaults) throws SQLException {
         Properties urlProps = (defaults != null) ? new Properties(defaults)
                 : new Properties();
-        if (url == null || !url.startsWith(URL_PREFIX)) {
+        if (url == null || !url.startsWith(ConstantDriver.URI_PREFIX)) {
             throw new SQLException("Invalid connection url: " + url);
         }
 
-        if (url.length() <= URL_PREFIX.length()) {
+        if (url.length() <= ConstantDriver.URI_PREFIX.length()) {
             return urlProps;
         }
 
-        // [hostname]:[port]
-        String connectionInfo = url.substring(URL_PREFIX.length());
+        // [host]:[port]
+        String connectionInfo = url.substring(ConstantDriver.URI_PREFIX.length());
 
-        // [hostname]:[port]
+        // [host]:[port]
         String[] hostPort = connectionInfo.split("/", 2);
 
-        // [hostname]:[port]
+        // [host]:[port]
         if (hostPort[0].length() > 0) {
             String[] hostAndPort = hostPort[0].split(":", 2);
             urlProps.put(HOST_PROPERTY_KEY, hostAndPort[0]);
@@ -187,7 +188,7 @@ public class HBaseDriver implements Driver {
             info = new Properties();
         }
 
-        if ((url != null) && url.startsWith(URL_PREFIX)) {
+        if ((url != null) && url.startsWith(ConstantDriver.URI_PREFIX)) {
             info = parseURL(url, info);
         }
 
@@ -211,7 +212,6 @@ public class HBaseDriver implements Driver {
 
     /**
      * for jdk1.7
-     *
      * @return
      * @throws SQLException
      */

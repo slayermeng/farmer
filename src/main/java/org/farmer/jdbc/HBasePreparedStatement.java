@@ -12,9 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * User: mengxin
- * Date: 13-10-10
- * Time: 上午10:08
+ * Implement PreparedStatement
  */
 public class HBasePreparedStatement implements PreparedStatement {
     private String sql;

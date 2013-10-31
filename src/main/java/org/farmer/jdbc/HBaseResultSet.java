@@ -30,11 +30,9 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 /**
- * Created with IntelliJ IDEA.
  * User: mengxin
  * Date: 13-10-10
  * Time: 下午2:17
- * To change this template use File | Settings | File Templates.
  */
 public class HBaseResultSet implements ResultSet {
     private static final Log LOG = LogFactory.getLog(HBaseResultSet.class);
@@ -67,53 +65,37 @@ public class HBaseResultSet implements ResultSet {
 
     //TODO get方法实现
     public boolean next() throws SQLException {
-//        if (maxRows > 0 && rowsFetched >= maxRows) {
-//            return false;
-//        }
-//
-//        try {
-//            if (fetchedRows == null || !fetchedRowsItr.hasNext()) {
-//                fetchedRows = client.fetchN(fetchSize);
-//                fetchedRowsItr = fetchedRows.iterator();
-//            }
-//
-//            String rowStr = "";
-//            if (fetchedRowsItr.hasNext()) {
-//                rowStr = fetchedRowsItr.next();
-//            } else {
-//                return false;
-//            }
-//
-//            rowsFetched++;
-//            if (LOG.isDebugEnabled()) {
-//                LOG.debug("Fetched row string: " + rowStr);
-//            }
-//
-//            StructObjectInspector soi = (StructObjectInspector) serde.getObjectInspector();
-//            List<? extends StructField> fieldRefs = soi.getAllStructFieldRefs();
-//            Object data = serde.deserialize(new BytesWritable(rowStr.getBytes()));
-//
-//            assert row.size() == fieldRefs.size() : row.size() + ", " + fieldRefs.size();
-//            for (int i = 0; i < fieldRefs.size(); i++) {
-//                StructField fieldRef = fieldRefs.get(i);
-//                ObjectInspector oi = fieldRef.getFieldObjectInspector();
-//                Object obj = soi.getStructFieldData(data, fieldRef);
-//                row.set(i, convertLazyToJava(obj, oi));
-//            }
-//
-//            if (LOG.isDebugEnabled()) {
-//                LOG.debug("Deserialized row: " + row);
-//            }
-//        } catch (HiveServerException e) {
-//            if (e.getErrorCode() == 0) { // error code == 0 means reached the EOF
-//                return false;
-//            } else {
-//                throw new SQLException("Error retrieving next row", e);
-//            }
-//        } catch (Exception ex) {
-//            ex.printStackTrace();
-//            throw new SQLException("Error retrieving next row", ex);
-//        }
+        if (maxRows > 0 && rowsFetched >= maxRows) {
+            return false;
+        }
+
+        try {
+            if (fetchedRows == null || !fetchedRowsItr.hasNext()) {
+//                fetchedRows = client.fetchN(fetchSize);//读取fetchSize个结果
+                fetchedRowsItr = fetchedRows.iterator();
+            }
+
+            String rowStr = "";
+            if (fetchedRowsItr.hasNext()) {
+                rowStr = fetchedRowsItr.next();
+            } else {
+                return false;
+            }
+
+            rowsFetched++;
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Fetched row string: " + rowStr);
+            }
+
+            //todo 解析行转换到row对象中
+
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Deserialized row: " + row);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw new SQLException("Error retrieving next row", ex);
+        }
         return true;
     }
 
