@@ -16,6 +16,8 @@ import org.farmer.transfer.SqlObjectToHBase;
 import java.io.StringReader;
 import java.util.List;
 
+import org.farmer.transfer.Plan;
+import org.farmer.transfer.QueryPlan;
 /**
  * User: mengxin
  * Date: 13-10-9
@@ -27,13 +29,12 @@ public class CommanderDispatcher {
     public void executeStatement(String statement) throws Exception{
         try{
         Statement stmt = parserManager.parse(new StringReader(statement));
-        if(stmt instanceof Select){
+        if(stmt instanceof Select){//查询类命令
             Select select = (Select)stmt;
             PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
-            List<WithItem> item = select.getWithItemsList();
 
-            SqlObjectToHBase soth = new SqlObjectToHBase();
-            List<Object> result = soth.scan(plainSelect);
+            Plan query = new QueryPlan(plainSelect);
+            List<Object> result = query.plan();
             for(int i=0;i<result.size();i++){
                 if(result.get(i) instanceof String){
                     System.out.println("结果是:"+result.get(i).toString());
@@ -43,19 +44,19 @@ public class CommanderDispatcher {
 
             }
         }else if(stmt instanceof Delete){
-            Delete delete = (Delete)stmt;
+            Delete delete = (Delete)stmt;//数据操作类命令
             System.out.println(delete.getTable());
         }else if(stmt instanceof Insert){
-            Insert insert = (Insert)stmt;
+            Insert insert = (Insert)stmt;//数据操作类命令
             System.out.println(insert.getTable());
         }else if(stmt instanceof Update){
-            Update update = (Update)stmt;
-            System.out.println(update.getTable());
-        }else if(stmt instanceof Drop){
+            Update update = (Update)stmt;//数据操作类命令
+        }else if(stmt instanceof Drop){//表修改
             Drop drop = (Drop)stmt;
-        }else if(stmt instanceof CreateTable){
+            throw new Exception("Statement not supported");
+        }else if(stmt instanceof CreateTable){//表修改
             CreateTable ct = (CreateTable)stmt;
-            System.out.println(ct.getTable());
+            throw new Exception("Statement not supported");
         }else{
             throw new Exception("grammer error!");
         }

@@ -27,18 +27,6 @@ import java.io.IOException;
 public class SqlObjectToHBase {
     Configuration config = HBaseConfiguration.create();
 
-    public List scan(PlainSelect plainSelect){
-        List result = new ArrayList();
-        try{
-            result = construct(plainSelect);
-        }catch(IOException e){
-            e.printStackTrace();
-        }catch(SQLSyntaxErrorException e){
-            e.printStackTrace();
-        }
-        return result;
-    }
-
     public String getTableName(PlainSelect select) throws SQLSyntaxErrorException{
         String tableName = select.getFromItem().toString();
         if(tableName==null){
@@ -47,7 +35,7 @@ public class SqlObjectToHBase {
         return tableName;
     }
 
-    public List construct(PlainSelect select) throws IOException,SQLSyntaxErrorException{
+    public List scan(PlainSelect select) throws IOException,SQLSyntaxErrorException{
         HTable table = new HTable(config,getTableName(select));
         Scan scan = new Scan();
         scan.setStartRow(Bytes.toBytes("123"));

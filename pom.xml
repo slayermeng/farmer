@@ -2,10 +2,66 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <groupId>org.farmer</groupId>
     <artifactId>farmer</artifactId>
+    <name>Farmer</name>
+    <packaging>jar</packaging>
     <version>0.1.0-SNAPSHOT</version>
+    <description></description>
+    <url></url>
 
+    <scm>
+        <connection></connection>
+        <developerConnection></developerConnection>
+        <url></url>
+    </scm>
+
+    <issueManagement>
+        <system></system>
+        <url></url>
+    </issueManagement>
+
+    <ciManagement>
+
+    </ciManagement>
+
+    <mailingLists>
+        <mailingList>
+            <name>Commits List</name>
+            <subscribe>mengxin83@gmail.com</subscribe>
+            <unsubscribe>mengxin83@gmail.com</unsubscribe>
+            <post>mengxin83@gmail.com</post>
+            <archive></archive>
+            <otherArchives>
+                <otherArchive></otherArchive>
+                <otherArchive></otherArchive>
+                <otherArchive></otherArchive>
+            </otherArchives>
+        </mailingList>
+    </mailingLists>
+
+    <developers>
+        <developer>
+            <id>mx</id>
+            <name>Meng Xin</name>
+            <email>mengxin83@gmail.com</email>
+            <timezone>-8</timezone>
+            <organization>none</organization>
+            <organizationUrl>none</organizationUrl>
+        </developer>
+    </developers>
+
+    <repositories>
+        <repository>
+            <id>apache release</id>
+            <url>https://repository.apache.org/content/repositories/releases/</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+
+    </pluginRepositories>
 
     <dependencies>
         <dependency>
