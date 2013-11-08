@@ -48,6 +48,9 @@ public class QueryPlan implements Plan {
         return null;
     }
 
+    /**
+     * get tableName for query
+     */
     protected String getTableName() throws SQLSyntaxErrorException{
         String tableName = select.getFromItem().toString();
         if(tableName==null){
@@ -56,6 +59,9 @@ public class QueryPlan implements Plan {
         return tableName;
     }
 
+    /**
+     * handle select item
+     */
     private void handleSelectItem(){
         List<SelectItem> items = select.getSelectItems();//目标列集合
         for(int i=0;i<items.size();i++){
@@ -75,6 +81,9 @@ public class QueryPlan implements Plan {
         }
     }
 
+    /**
+     * handle where condition
+     */
     private void handelWhereItem(){
         Expression expression = select.getWhere();
         List<Filter> filters = new ArrayList<Filter>();
@@ -83,6 +92,12 @@ public class QueryPlan implements Plan {
         scan.setFilter(filterList);
     }
 
+    /**
+     * Recurse expression
+     * append filter
+     * @param expression
+     * @param filters
+     */
     private void appendCondition(Expression expression,List<Filter> filters){
         //select * from name='mengxin' and age=30 or sex=1 and school='beijing';
         if(expression instanceof AndExpression){
@@ -98,12 +113,17 @@ public class QueryPlan implements Plan {
             Expression right = orEx.getRightExpression();
             appendCondition(right,filters);
         }else{
+            appendFilter(expression,filters);
             return;
         }
     }
 
     private void appendFilter(Expression expression,List<Filter> filters){
+        if(expression == null){
+            return;
+        }
         SingleColumnValueFilter filter = null;
+        //运算符实现
         if(expression instanceof EqualsTo){//=
             EqualsTo eqExp = (EqualsTo)expression;
             filter = new SingleColumnValueFilter(Bytes.toBytes("f1"),
@@ -142,7 +162,6 @@ public class QueryPlan implements Plan {
         }else if(expression instanceof InExpression){//in
             InExpression inExp = (InExpression)expression;
             Column column = (Column)inExp.getLeftExpression();
-
             ItemsList value = inExp.getRightItemsList();
             if(value instanceof ExpressionList){
                 ExpressionList exlist = (ExpressionList)value;
@@ -155,13 +174,17 @@ public class QueryPlan implements Plan {
                             new BinaryComparator(Bytes.toBytes(lv.getValue())));
                     filter.setFilterIfMissing(true);
                 }
-
             }
         }
 
         filters.add(filter);
     }
 
+    /**
+     * execute query plan
+     * @param table
+     * @throws IOException
+     */
     private void execScan(HTable table) throws IOException{
         //结果处理
         ResultScanner scanner = table.getScanner(scan);
@@ -172,6 +195,9 @@ public class QueryPlan implements Plan {
         }
     }
 
+    /**
+     * merge result
+     */
     private void merge(){
 
     }

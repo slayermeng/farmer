@@ -27,7 +27,7 @@ public class TestSqlToHBase {
     @Test
     public void parser() throws Exception{
         CCJSqlParserManager parserManager = new CCJSqlParserManager();
-        Select select = (Select)parserManager.parse(new StringReader("select * from abc where a in (1,2,3)"));
+        Select select = (Select)parserManager.parse(new StringReader("select * from test where name = 'mengxin' and age=30 or sex=1 and c=1 or d=2 and c=3 and d=1"));
         PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
         Expression ex = plainSelect.getWhere();
         System.out.println(ex.toString());
