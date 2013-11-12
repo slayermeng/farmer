@@ -1,7 +1,11 @@
 package org.farmer.query;
 
+import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
+import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
 import net.sf.jsqlparser.parser.CCJSqlParserManager;
+import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
 import org.farmer.parser.CommanderDispatcher;
@@ -29,7 +33,21 @@ public class TestSqlToHBase {
         CCJSqlParserManager parserManager = new CCJSqlParserManager();
         Select select = (Select)parserManager.parse(new StringReader("select * from test where name = 'mengxin' and age=30 or sex=1 and c=1 or d=2 and c=3 and d=1"));
         PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
-        Expression ex = plainSelect.getWhere();
-        System.out.println(ex.toString());
+        BinaryExpression expression = (BinaryExpression)plainSelect.getWhere();
+        postOrder(expression);
+    }
+
+    public static void postOrder(BinaryExpression expression){
+        if(expression != null){
+            if((expression.getLeftExpression() instanceof BinaryExpression)&&(expression.getRightExpression() instanceof BinaryExpression)){
+                postOrder((BinaryExpression)expression.getLeftExpression());
+                postOrder((BinaryExpression)expression.getRightExpression());
+            }
+            printNode(expression);
+        }
+    }
+
+    public static void printNode(Expression expression){
+        System.out.println(expression.toString());
     }
 }

@@ -86,10 +86,23 @@ public class QueryPlan implements Plan {
      */
     private void handelWhereItem(){
         Expression expression = select.getWhere();
-        List<Filter> filters = new ArrayList<Filter>();
-        appendCondition(expression,filters);
-        FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL,filters);
-        scan.setFilter(filterList);
+        postOrder(expression);
+//        List<Filter> filters = new ArrayList<Filter>();
+//        appendCondition(expression,filters);
+//        FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL,filters);
+//        scan.setFilter(filterList);
+    }
+
+    public static void postOrder(Expression expression){
+        if(expression != null){
+            postOrder(expression);
+            postOrder(expression);
+            printNode(expression);
+        }
+    }
+
+    public static void printNode(Expression expression){
+        System.out.print(expression.toString());
     }
 
     /**
