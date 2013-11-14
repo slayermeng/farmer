@@ -23,6 +23,8 @@ import java.io.StringReader;
 public class TestSqlToHBase {
     CommanderDispatcher parser = new CommanderDispatcher();
 
+    private static int level=0;
+
     @Test
     public void execute() throws Exception{
         parser.executeStatement("select count(q1) from testtable where q1=mengxin and q2=30");
@@ -34,20 +36,57 @@ public class TestSqlToHBase {
         Select select = (Select)parserManager.parse(new StringReader("select * from test where name = 'mengxin' and age=30 or sex=1 and c=1 or d=2 and c=3 and d=1"));
         PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
         BinaryExpression expression = (BinaryExpression)plainSelect.getWhere();
+        System.out.println("树深"+length(expression));
         postOrder(expression);
     }
 
     public static void postOrder(BinaryExpression expression){
         if(expression != null){
             if((expression.getLeftExpression() instanceof BinaryExpression)&&(expression.getRightExpression() instanceof BinaryExpression)){
+                level++;
                 postOrder((BinaryExpression)expression.getLeftExpression());
+                //计算左子树结果
                 postOrder((BinaryExpression)expression.getRightExpression());
+                //计算右子树结果
+                level--;
+                printNode(expression);
             }
-            printNode(expression);
+
         }
     }
 
     public static void printNode(Expression expression){
-        System.out.println(expression.toString());
+        System.out.println(expression.toString()+"(级别"+level+")");
+
+    }
+
+    public static int length(BinaryExpression expression){
+        int depth1;
+        int depth2;
+        if(expression == null) return 0;
+        //左子树的深度
+        if((expression.getLeftExpression()) instanceof BinaryExpression){
+        depth1 = length((BinaryExpression)expression.getLeftExpression());
+        //右子树的深度
+        depth2 = length((BinaryExpression)expression.getRightExpression());
+            if(depth1>depth2)
+                return depth1+1;
+            else
+                return depth2+1;
+        }else{
+            return 1;
+        }
+
+    }
+
+    public class Node{
+        private Node parent;
+
+        private Expression leftExpression;
+        private Expression rightExpression;
+
+        public Node(){
+
+        }
     }
 }
