@@ -32,7 +32,7 @@ public class TestSqlToHBase {
     @Test
     public void parser() throws Exception{
         CCJSqlParserManager parserManager = new CCJSqlParserManager();
-        Select select = (Select)parserManager.parse(new StringReader("select * from test where a=1 and b=2 and c=3 and d=4 and e=5 or f=7"));
+        Select select = (Select)parserManager.parse(new StringReader("select * from test where a=1 and b=2 and c=3 and (d=4 or e=5 )and f=7"));
         PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
         BinaryExpression expression = (BinaryExpression)plainSelect.getWhere();
         postOrderzy(expression);
@@ -52,16 +52,22 @@ public class TestSqlToHBase {
 
         if(expression != null){
             if(expression.getLeftExpression() instanceof BinaryExpression){
-                postOrder((BinaryExpression)expression.getLeftExpression());
+                postOrderzy((BinaryExpression)expression.getLeftExpression());
             }
             if (expression.getRightExpression() instanceof BinaryExpression){
-                postOrder((BinaryExpression)expression.getRightExpression());
+                postOrderzy((BinaryExpression)expression.getRightExpression());
             }
             printNode(expression);
         }
     }
     public static boolean printNode(BinaryExpression expression){
-        System.out.println("xl:"+expression.getLeftExpression());
+        System.out.println("xl:"+expression.getLeftExpression()+"  c: "+expression.getLeftExpression().getClass());
+        System.out.println("xx:"+expression.getStringExpression() );
+        System.out.println("xr:"+expression.getRightExpression());
+        return true;
+    }
+    public static boolean exeNode(BinaryExpression expression){
+        System.out.println("xl:"+expression.getLeftExpression().getClass());
         System.out.println("xx:"+expression.getStringExpression() );
         System.out.println("xr:"+expression.getRightExpression());
         boolean end =false;
@@ -100,8 +106,9 @@ public class TestSqlToHBase {
         int x=0;
         if(expression.getStringExpression() .matches( "AND")){x=1;}
         if(expression.getStringExpression() .matches( "OR")){x=2;}
-        if(x > 0){
-            System.out.println("ANDANDANDANDAND: "+((BinaryExpression)expression.getLeftExpression()).isNot()+" "+((BinaryExpression)expression.getRightExpression()).isNot());
+        if((x > 0)&& (null==expression.getLeftExpression()&&null==expression.getLeftExpression())){
+            //  if(x > 0){
+                 System.out.println("ANDANDANDANDAND: "+((BinaryExpression)expression.getLeftExpression()).isNot()+" "+((BinaryExpression)expression.getRightExpression()).isNot());
             boolean tl = ((BinaryExpression)expression.getLeftExpression()).isNot();
             boolean tr = ((BinaryExpression)expression.getRightExpression()).isNot();
             if(1==x)
@@ -113,8 +120,8 @@ public class TestSqlToHBase {
             }
         }
 
-      //  expression.setLeftExpression(null);
-     //   expression.setRightExpression(null);
+        expression.setLeftExpression(null);
+        expression.setRightExpression(null);
         System.out.println("end: "+ end);
         return end;
       /*
