@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.io.IOException;
 
+import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
@@ -23,6 +24,7 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.farmer.coprocessor.AggregationOperator;
+import org.farmer.filter.MultiColumnValueFilter;
 import net.sf.jsqlparser.schema.Column;
 import java.sql.SQLSyntaxErrorException;
 
@@ -85,24 +87,24 @@ public class QueryPlan implements Plan {
      * handle where condition
      */
     private void handelWhereItem(){
-        Expression expression = select.getWhere();
+        BinaryExpression expression = (BinaryExpression)select.getWhere();
         postOrder(expression);
-//        List<Filter> filters = new ArrayList<Filter>();
-//        appendCondition(expression,filters);
-//        FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL,filters);
-//        scan.setFilter(filterList);
+        Filter filter = new MultiColumnValueFilter(expression);
+        scan.setFilter(filter);
     }
 
-    public static void postOrder(Expression expression){
+    public static void postOrder(BinaryExpression expression){
         if(expression != null){
-            postOrder(expression);
-            postOrder(expression);
+            if((expression.getLeftExpression() instanceof BinaryExpression)&&(expression.getRightExpression() instanceof BinaryExpression)){
+                postOrder((BinaryExpression)expression.getLeftExpression());
+                postOrder((BinaryExpression)expression.getRightExpression());
+            }
             printNode(expression);
         }
     }
 
     public static void printNode(Expression expression){
-        System.out.print(expression.toString());
+        System.out.println(expression.toString());
     }
 
     /**
