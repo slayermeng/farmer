@@ -29,16 +29,18 @@ public class MultiLogicFilterList extends FilterBase {
 
     @Override
     public void filterRow(List<KeyValue> kvs) {
+        List<ReturnCode> resultList = new ArrayList<ReturnCode>();
         for(Expression expression:expressions){
             if(!(expression instanceof BinaryExpression)){
                 Filter filter = new SingleColumnValueFilter(Bytes.toBytes("f1"),
                         Bytes.toBytes(((BinaryExpression)expression).getLeftExpression().toString()),
                         CompareFilter.CompareOp.EQUAL,
                         new BinaryComparator(Bytes.toBytes("1")));
-                filter.filterKeyValue(kvs.get(0));
+                ReturnCode rt = filter.filterKeyValue(kvs.get(0));
+                resultList.add(rt);//filter结果
             }
-            expression.toString();
         }
+
     }
 
     public void readFields(DataInput dataInput) throws IOException {

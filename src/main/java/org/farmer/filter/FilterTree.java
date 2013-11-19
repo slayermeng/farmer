@@ -83,12 +83,10 @@ public class FilterTree implements Filter {
 
     }
 
-    @Override
     public void reset() {
         BinaryExpression expression = (BinaryExpression)plainSelect.getWhere();
     }
 
-    @Override
     public boolean filterRowKey(byte[] rowKey, int offset, int length) {
         /*
         for (Filter filter : filters) {
@@ -112,7 +110,6 @@ public class FilterTree implements Filter {
         return true;
     }
 
-    @Override
     public ReturnCode filterKeyValue(KeyValue v) {
         /*
         ReturnCode rc = operator == Operator.MUST_PASS_ONE?
@@ -157,7 +154,6 @@ public class FilterTree implements Filter {
         return  ReturnCode.INCLUDE;
     }
 
-    @Override
     public boolean filterRow() {
         /*
         for (Filter filter : filters) {
@@ -176,7 +172,6 @@ public class FilterTree implements Filter {
         return true;
     }
 
-    @Override
     public boolean filterAllRemaining() {
         /*
         for (Filter filter : filters) {
@@ -195,7 +190,6 @@ public class FilterTree implements Filter {
         return true;
     }
 
-    @Override
     public KeyValue transform(KeyValue v) {
         KeyValue current = v;
         for (Filter filter : filters) {
@@ -206,14 +200,12 @@ public class FilterTree implements Filter {
 
 
 
-    @Override
     public void filterRow(List<KeyValue> kvs) {
         for (Filter filter : filters) {
             filter.filterRow(kvs);
         }
     }
 
-    @Override
     public boolean hasFilterRow() {
         for (Filter filter : filters) {
             if(filter.hasFilterRow()) {
@@ -246,7 +238,6 @@ public class FilterTree implements Filter {
         }
     }
 
-    @Override
     public KeyValue getNextKeyHint(KeyValue currentKV) {
         KeyValue keyHint = null;
         /*

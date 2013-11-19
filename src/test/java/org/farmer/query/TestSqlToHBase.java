@@ -36,18 +36,8 @@ public class TestSqlToHBase {
         PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
         BinaryExpression expression = (BinaryExpression)plainSelect.getWhere();
         postOrderzy(expression);
-        // printNode(expression);
     }
 
-    public static void postOrder(BinaryExpression expression){
-        if(expression != null){
-            if((expression.getLeftExpression() instanceof BinaryExpression)&&(expression.getRightExpression() instanceof BinaryExpression)){
-                postOrder((BinaryExpression)expression.getLeftExpression());
-                postOrder((BinaryExpression)expression.getRightExpression());
-            }
-            printNode(expression);
-        }
-    }
     public static void postOrderzy(BinaryExpression expression){
 
         if(expression != null){
@@ -57,15 +47,10 @@ public class TestSqlToHBase {
             if (expression.getRightExpression() instanceof BinaryExpression){
                 postOrderzy((BinaryExpression)expression.getRightExpression());
             }
-            printNode(expression);
+            exeNode(expression);
         }
     }
-    public static boolean printNode(BinaryExpression expression){
-        System.out.println("xl:"+expression.getLeftExpression()+"  c: "+expression.getLeftExpression().getClass());
-        System.out.println("xx:"+expression.getStringExpression() );
-        System.out.println("xr:"+expression.getRightExpression());
-        return true;
-    }
+
     public static boolean exeNode(BinaryExpression expression){
         System.out.println("xl:"+expression.getLeftExpression().getClass());
         System.out.println("xx:"+expression.getStringExpression() );
@@ -124,27 +109,7 @@ public class TestSqlToHBase {
         expression.setRightExpression(null);
         System.out.println("end: "+ end);
         return end;
-      /*
 
-       if(expression.getStringExpression().matches("=")){
-            System.out.println("aaaaaaaaaa");
-        }
-        if(expression.getLeftExpression() instanceof Column){
-            System.out.println("aaaaaaaaaa");
-        }
-        if(expression.getLeftExpression() instanceof net.sf.jsqlparser.expression.LongValue){
-            System.out.println("bbbbbbb");
-        }
-        if(expression.getLeftExpression() instanceof net.sf.jsqlparser.expression.operators.relational.EqualsTo){
-            System.out.println("cccc");
-        }
-        if(expression.getLeftExpression() instanceof  net.sf.jsqlparser.expression.operators.conditional.AndExpression){
-            System.out.println("dddddddddd");
-        }
-        if(expression.getLeftExpression() instanceof  net.sf.jsqlparser.expression.operators.conditional.OrExpression){
-            System.out.println("eeeeeee");
-        }
-        */
     }
 
 
