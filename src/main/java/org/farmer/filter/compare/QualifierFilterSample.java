@@ -22,5 +22,6 @@ public class QualifierFilterSample extends FilterBaseSample {
         FilterBaseSample qf1 = new QualifierFilterSample("testtable");
         qf1.setFilter(CompareFilter.CompareOp.LESS_OR_EQUAL, new BinaryComparator(Bytes.toBytes("q2")));
         qf1.display();
+
     }
 }

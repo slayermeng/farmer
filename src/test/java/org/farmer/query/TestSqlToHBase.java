@@ -32,7 +32,7 @@ public class TestSqlToHBase {
     @Test
     public void parser() throws Exception{
         CCJSqlParserManager parserManager = new CCJSqlParserManager();
-        Select select = (Select)parserManager.parse(new StringReader("select * from test where a=1 and b=2 and c=3 and (d=4 or e=5 )and f=7"));
+        Select select = (Select)parserManager.parse(new StringReader("select * from test where (a=1 and b=2 or c=3) and (d=4 or e=5 )and f=7"));
         PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
         BinaryExpression expression = (BinaryExpression)plainSelect.getWhere();
         postOrderzy(expression);
@@ -52,11 +52,9 @@ public class TestSqlToHBase {
     }
 
     public static boolean exeNode(BinaryExpression expression){
-        System.out.println("xl:"+expression.getLeftExpression().getClass());
-        System.out.println("xx:"+expression.getStringExpression() );
-        System.out.println("xr:"+expression.getRightExpression());
-        boolean end =false;
 
+        boolean end =false;
+        System.out.println("表达式:"+expression.toString());
         if(!(expression.getLeftExpression() instanceof BinaryExpression)
                 && !(expression.getRightExpression() instanceof BinaryExpression)){
         //    System.out.println("aaaaaaaaaa");

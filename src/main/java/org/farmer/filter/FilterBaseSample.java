@@ -33,6 +33,7 @@ public abstract class FilterBaseSample {
     public void setFilter(CompareFilter.CompareOp rowCompareOp,WritableByteArrayComparable comparator){
         Filter filter = new RowFilter(rowCompareOp,comparator);
         scan.setFilter(filter);
+        System.out.println("filter名称"+filter.toString());
     }
 
     public void display() throws IOException {
