@@ -9,10 +9,13 @@ package org.farmer.filter;
  */
 
 import net.sf.jsqlparser.JSQLParserException;
-import net.sf.jsqlparser.expression.BinaryExpression;
+import net.sf.jsqlparser.expression.*;
 import net.sf.jsqlparser.parser.CCJSqlParserManager;
+import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
@@ -22,20 +25,14 @@ import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.io.HbaseObjectWritable;
 import org.apache.hadoop.io.Writable;
+import org.farmer.parser.EndExpression;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-//import org.farmer.parser.CommanderDispatcher;
-
-//import org.apache.hadoop.hbase.Cell;
-//import org.apache.hadoop.hbase.KeyValueUtil;
-//import org.apache.hadoop.hbase.exceptions.DeserializationException;
-//import org.apache.hadoop.hbase.protobuf.generated.FilterProtos;
 
 
 /**
@@ -44,262 +41,282 @@ import java.util.List;
 @InterfaceAudience.Public
 @InterfaceStability.Stable
 public class FilterTree implements Filter {
-    /** set operator
-    public static enum Operator {
-        // !AND
-        MUST_PASS_ALL,
-        // !OR
-        MUST_PASS_ONE
-    }*/
+
     private CCJSqlParserManager parserManager = new CCJSqlParserManager();
     private Select select;// = (Select)parserManager.parse(new StringReader("select * from test where a=1 and b=2 and c=3 and (d=4 or e=5 )and f=7"));
     private PlainSelect plainSelect;// = (PlainSelect) select.getSelectBody();
-    private BinaryExpression expression; //= (BinaryExpression)plainSelect.getWhere();
+    private BinaryExpression Whereexp; //= (BinaryExpression)plainSelect.getWhere();
     private String mysql = null;
     private static final Configuration conf = HBaseConfiguration.create();
-    private static final int MAX_LOG_FILTERS = 5;
-   // private Operator operator = Operator.MUST_PASS_ALL;
-    private List<Filter> filters = new ArrayList<Filter>();
+   // private List<Filter> filters = new ArrayList<Filter>();
+    private Map<String,EndExpression> Columnm =  new TreeMap<String,EndExpression>();
+    private Set<String> Columns = new TreeSet<String>();
+    public static final Log LOG = LogFactory.getLog(FilterTree.class);
 
     /**
      * Default constructor, filters nothing. Required though for RPC
      * deserialization.
-
+     */
     public FilterTree() {
         super();
     }
-     */
 
     public FilterTree(final String sql) {
+        LOG.info("fffffff     FilterTree");
+        initx(sql);
+    }
+    public void initx(final String sql){
+        LOG.info("fffffff     initx");
         this.mysql = sql;
-        Select select = null;
+        Columnm.clear();
         try {
             select = (Select)parserManager.parse(new StringReader(mysql));
-            PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
-            BinaryExpression expression = (BinaryExpression)plainSelect.getWhere();
+            plainSelect = (PlainSelect) select.getSelectBody();
+            Whereexp = (BinaryExpression)plainSelect.getWhere();
+            Traversalwhere(Whereexp);
         } catch (JSQLParserException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
+    }
 
+    public  void Traversalwhere(Expression expression){
+        if(expression == null)
+            return ;
+        if(expression instanceof BinaryExpression) {
+            if(((BinaryExpression)expression).getLeftExpression() != null){
+                Traversalwhere(((BinaryExpression) expression).getLeftExpression());
+            }
+            if(((BinaryExpression)expression).getRightExpression() != null){
+                Traversalwhere(((BinaryExpression) expression).getRightExpression());
+            }
+
+        }else if(expression instanceof Column){
+            //     LOG.info("xxxxxxx     Column:"+expression);
+            Columnm.put(((Column) expression).getColumnName(), null);
+        }
+        return ;
+    }
+
+    public  EndExpression getColumnvalue(Column expression){
+        if(expression == null)
+            return null;
+        return Columnm.get(expression.getColumnName());
+    }
+
+    public  EndExpression exeNode(Expression expression){
+        LOG.info("xxxxxxx     exeNode:"+expression.toString()+" class:"+expression.getClass());
+        Long ll=null,rl=null;
+
+        if(expression == null)
+            return null;
+        if(expression instanceof BinaryExpression) {
+            LOG.info("xxxxxxx     exeNode if:"+expression.toString());
+
+            Expression le,re;
+            le = ((BinaryExpression)expression).getLeftExpression();
+            re = ((BinaryExpression)expression).getRightExpression();
+            if( le instanceof Column){
+                ll = Long.parseLong(new String(getColumnvalue((Column) le).getValue()));
+            }else if( le instanceof LongValue){
+                ll = ((LongValue) le).getValue();
+            }else if( le instanceof EndExpression){
+                ll =  Long.parseLong(  new String(   ((EndExpression) le).getValue()  )  );
+            }
+            if( re instanceof Column){
+                rl = Long.parseLong(new String(getColumnvalue((Column)re).getValue()));
+            }else if( re instanceof LongValue){
+                rl = ((LongValue) re).getValue();
+            }else if( re instanceof EndExpression){
+                rl =  Long.parseLong(new String(   ((EndExpression) re).getValue()  ));
+            }
+            if((null==ll)||(null==rl)){
+                LOG.info("xxxxxxx     exeNode no support !!!!!!!!! "+le.getClass()+" "+re.getClass());
+                return null;
+            }
+
+            Integer r;
+            String es = ((BinaryExpression) expression).getStringExpression();
+            if(es.equals("<=")){
+                r =  ll <= rl ? 1 : 0;
+            }else if(es.equals("<")){
+                r =  ll < rl ? 1 : 0;
+            }else if(es.equals("<>")){
+                r =  ll != rl ? 1 : 0;
+            }else if(es.equals("=")){
+                r =  ll == rl ? 1 : 0;
+            }else if(es.equals(">")){
+                r =  ll > rl ? 1 : 0;
+            }else if(es.equals(">=")){
+                r =  ll >= rl ? 1 : 0;
+            }else if(es.equals("AND")){
+               if((ll>0)&&(rl>0))
+                   r = 1;
+                else
+                   r = 0;
+            }else if(es.equals("OR")){
+                if((ll>0)||(rl>0))
+                    r = 1;
+                else
+                    r = 0;
+            }else{
+                //  throw new RuntimeException("Unknown Compare op " + compareOp.name());
+                LOG.info("xxxxxxx     exeNode no support !!!!!!!!! " + es);
+                return null;
+            }
+
+            EndExpression ee = new EndExpression(r.toString().getBytes(),"endbool");
+            LOG.info("xxxxxxx     exeNode result: "+ee.toString());
+            return ee;
+        }else{
+            LOG.info("xxxxxxx     exeNode else:"+expression.toString()+" class:"+expression.getClass());
+        }
+        return null;
+    }
+    public  EndExpression exeexpression(Expression expression){
+        LOG.info("xxxxxxx     exewhere:"+expression+" class:"+expression.getClass());
+        Expression LeftExpression,RightExpression;
+        if(expression == null)
+            return null;
+        if(expression instanceof BinaryExpression) {
+       //     LOG.info("xxxxxxx     xl:"+((BinaryExpression)expression).getLeftExpression()+"  r: "+((BinaryExpression)expression).getLeftExpression().getClass());
+      //      LOG.info("xxxxxxx     xc:"+((BinaryExpression)expression).getStringExpression()+"  c: "+((BinaryExpression)expression).getStringExpression().getClass() );
+       //     LOG.info("xxxxxxx     xr:"+((BinaryExpression)expression).getRightExpression()+"  l: "+((BinaryExpression)expression).getRightExpression().getClass());
+            if(((BinaryExpression)expression).getLeftExpression() instanceof BinaryExpression){
+                LeftExpression = exeexpression(((BinaryExpression) expression).getLeftExpression());
+                ((BinaryExpression)expression).setLeftExpression(LeftExpression);
+            }
+            if(((BinaryExpression)expression).getRightExpression() instanceof BinaryExpression){
+                RightExpression = exeexpression(((BinaryExpression) expression).getRightExpression());
+                ((BinaryExpression)expression).setRightExpression(RightExpression);
+            }
+            return exeNode(expression);
+        }
+        LOG.info("xxxxxxx     exewhere end:"+expression.toString() );
+        return exeNode(expression);
+    }
+
+    @Override
+    public ReturnCode filterKeyValue(KeyValue kv) {
+        boolean bin = false;
+        LOG.info("fffffff     filterKeyValue r: "+new String( kv.getRow())+" f: "+new String( kv.getFamily())+
+                  " q: "+new String( kv.getQualifier())+" v: "+new String( kv.getValue())+" k: "+ new String( kv.getKey()) );
+        String fq = new String( kv.getFamily())+"_"+new String( kv.getQualifier());
+       if(Columnm.containsKey(fq)){
+           Columnm.put(fq , new EndExpression( kv.getValue(),null));
+          // bin = true;
+       }
+        LOG.info("fffffff     Columnm: "+Columnm.toString());
+
+        for (String key : Columnm.keySet()) {
+            LOG.info("fffffff     filterKeyValue  it: k:"+key+" v:"+Columnm.get(key));
+            if(null == Columnm.get(key)){
+                LOG.info("fffffff     filterKeyValue  ReturnCode: "+bin);
+                return  ReturnCode.INCLUDE_AND_NEXT_COL ;
+              /*
+                if(bin)
+                    return ReturnCode.INCLUDE_AND_NEXT_COL;
+                else
+                    return  ReturnCode.NEXT_COL ;
+              */
+            }
+        }
+        LOG.info("fffffff     filterKeyValue  ReturnCode.NEXT_ROW");
+        return  ReturnCode.NEXT_ROW;
     }
 
     @Override
     public void reset() {
-        BinaryExpression expression = (BinaryExpression)plainSelect.getWhere();
+        LOG.info("fffffff     reset");
+        initx(mysql);
     }
 
     @Override
     public boolean filterRowKey(byte[] rowKey, int offset, int length) {
-        /*
-        for (Filter filter : filters) {
-            if (this.operator == Operator.MUST_PASS_ALL) {
-                if (filter.filterAllRemaining() ||
-                        filter.filterRowKey(rowKey, offset, length)) {
-                    return true;
-                }
-            } else if (this.operator == Operator.MUST_PASS_ONE) {
-                if (!filter.filterAllRemaining() &&
-                        !filter.filterRowKey(rowKey, offset, length)) {
-                    return false;
-                }
-            }
+        boolean rr= false;
+        LOG.info("fffffff     filterRowKey " +offset+" "+length+" "+rr );
+        String hexs = new String();
+        for (int i = offset; i < offset+length; i++) {
+            String hex = Integer.toHexString(rowKey[i] & 0xFF);
+            if (hex.length() == 1) {
+                hex = '0' + hex;
+           }
+            hexs+=' '+hex;
         }
-        return this.operator == Operator.MUST_PASS_ONE;
-        */
-       /*
-       *  RowFilter PrefixFilter
-       * */
-        return true;
+        LOG.info("fffffff     filterRowKey: "  + hexs );
+        return rr;
     }
 
-    @Override
-    public ReturnCode filterKeyValue(KeyValue v) {
-        /*
-        ReturnCode rc = operator == Operator.MUST_PASS_ONE?
-                ReturnCode.SKIP: ReturnCode.INCLUDE;
-        for (Filter filter : filters) {
-            if (operator == Operator.MUST_PASS_ALL) {
-                if (filter.filterAllRemaining()) {
-                    return ReturnCode.NEXT_ROW;
-                }
-                ReturnCode code = filter.filterKeyValue(v);
-                switch (code) {
-                    // Override INCLUDE and continue to evaluate.
-                    case INCLUDE_AND_NEXT_COL:
-                        rc = ReturnCode.INCLUDE_AND_NEXT_COL;
-                    case INCLUDE:
-                        continue;
-                    default:
-                        return code;
-                }
-            } else if (operator == Operator.MUST_PASS_ONE) {
-                if (filter.filterAllRemaining()) {
-                    continue;
-                }
 
-                switch (filter.filterKeyValue(v)) {
-                    case INCLUDE:
-                        if (rc != ReturnCode.INCLUDE_AND_NEXT_COL) {
-                            rc = ReturnCode.INCLUDE;
-                        }
-                        break;
-                    case INCLUDE_AND_NEXT_COL:
-                        rc = ReturnCode.INCLUDE_AND_NEXT_COL;
-                        // must continue here to evaluate all filters
-                    case NEXT_ROW:
-                    case SKIP:
-                        // continue;
-                }
-            }
-        }
-        return rc;
-        */
-        return  ReturnCode.INCLUDE;
-    }
 
     @Override
     public boolean filterRow() {
-        /*
-        for (Filter filter : filters) {
-            if (operator == Operator.MUST_PASS_ALL) {
-                if (filter.filterRow()) {
-                    return true;
-                }
-            } else if (operator == Operator.MUST_PASS_ONE) {
-                if (!filter.filterRow()) {
-                    return false;
-                }
-            }
-        }
-        return  operator == Operator.MUST_PASS_ONE;
-        */
-        return true;
+        LOG.info("fffffff     filterRow: ");
+        EndExpression ee = exeexpression(Whereexp);
+        long r =  Long.parseLong(new String(   ((EndExpression) ee).getValue()  ));
+        LOG.info("fffffff     filterRow: "+r+" ee: "+ee);
+        if(r !=0)
+            return false;
+        else
+            return true;
     }
 
     @Override
     public boolean filterAllRemaining() {
-        /*
-        for (Filter filter : filters) {
-            if (filter.filterAllRemaining()) {
-                if (operator == Operator.MUST_PASS_ALL) {
-                    return true;
-                }
-            } else {
-                if (operator == Operator.MUST_PASS_ONE) {
-                    return false;
-                }
-            }
-        }
-        return operator == Operator.MUST_PASS_ONE;
-        */
-        return true;
+        boolean rr= false;
+        LOG.info("fffffff     filterAllRemaining "+rr);
+        return rr;
     }
 
     @Override
     public KeyValue transform(KeyValue v) {
-        KeyValue current = v;
-        for (Filter filter : filters) {
-            current = filter.transform(current);
-        }
-        return current;
+        LOG.info("fffffff     transform "+v.toString());
+
+        return v;
     }
-
-
 
     @Override
     public void filterRow(List<KeyValue> kvs) {
-        for (Filter filter : filters) {
-            filter.filterRow(kvs);
-        }
+        LOG.info("fffffff     filterRow");
+
     }
 
     @Override
     public boolean hasFilterRow() {
-        for (Filter filter : filters) {
-            if(filter.hasFilterRow()) {
-                return true;
-            }
-        }
-        return false;
+        boolean rr= true;
+        LOG.info("fffffff     hasFilterRow "+rr);
+        return rr;
     }
+
 
 
 
     public void readFields(final DataInput in) throws IOException {
-        byte opByte = in.readByte();
-      //  operator = Operator.values()[opByte];
-        int size = in.readInt();
-        if (size > 0) {
-            filters = new ArrayList<Filter>(size);
-            for (int i = 0; i < size; i++) {
-                Filter filter = (Filter)HbaseObjectWritable.readObject(in, conf);
-                filters.add(filter);
-            }
-        }
+        LOG.info("fffffff     readFields");
+        initx((String) HbaseObjectWritable.readObject(in, conf));
     }
 
     public void write(final DataOutput out) throws IOException {
-     //   out.writeByte(operator.ordinal());
-        out.writeInt(filters.size());
-        for (Filter filter : filters) {
-            HbaseObjectWritable.writeObject(out, filter, Writable.class, conf);
-        }
+        LOG.info("fffffff     write");
+        HbaseObjectWritable.writeObject(out,mysql,String.class,conf);
     }
+
 
     @Override
     public KeyValue getNextKeyHint(KeyValue currentKV) {
         KeyValue keyHint = null;
-        /*
-        for (Filter filter : filters) {
-            KeyValue curKeyHint = filter.getNextKeyHint(currentKV);
-            if (curKeyHint == null && operator == Operator.MUST_PASS_ONE) {
-                // If we ever don't have a hint and this is must-pass-one, then no hint
-                return null;
-            }
-            if (curKeyHint != null) {
-                // If this is the first hint we find, set it
-                if (keyHint == null) {
-                    keyHint = curKeyHint;
-                    continue;
-                }
-                // There is an existing hint
-                if (operator == Operator.MUST_PASS_ALL &&
-                        KeyValue.COMPARATOR.compare(keyHint, curKeyHint) < 0) {
-                    // If all conditions must pass, we can keep the max hint
-                    keyHint = curKeyHint;
-                } else if (operator == Operator.MUST_PASS_ONE &&
-                        KeyValue.COMPARATOR.compare(keyHint, curKeyHint) > 0) {
-                    // If any condition can pass, we need to keep the min hint
-                    keyHint = curKeyHint;
-                }
-            }
-        }
-        */
+
         return keyHint;
     }
 
     public boolean isFamilyEssential(byte[] name) {
-        for (Filter filter : filters) {
-            if (FilterBase.isFamilyEssential(filter, name)) {
-                return true;
-            }
-        }
+
         return false;
     }
 
     @Override
     public String toString() {
-        return toString(MAX_LOG_FILTERS);
+        return mysql;
     }
 
-    protected String toString(int maxFilters) {
-        int endIndex = this.filters.size() < maxFilters
-                ? this.filters.size() : maxFilters;
-        return String.format("%s %s (%d/%d): %s",
-                this.getClass().getSimpleName(),
-        //        this.operator == Operator.MUST_PASS_ALL ? "AND" : "OR",
-                endIndex,
-                this.filters.size(),
-                this.filters.subList(0, endIndex).toString());
-    }
+
 }

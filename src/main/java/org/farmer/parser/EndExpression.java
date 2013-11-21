@@ -11,27 +11,27 @@ import net.sf.jsqlparser.schema.*;
  * To change this template use File | Settings | File Templates.
  */
 public class EndExpression implements  Expression {
-    private byte[] columnValue;
-    private String columnschema = "";
+    private byte[] Value;
+    private String schema = "";
     private boolean end = false;
 
-    public EndExpression(byte[] columnValue,String columnschema) {
-        this.columnValue = columnValue;
-        this.columnschema = columnschema;
+    public EndExpression(byte[] Value,String schema) {
+        this.Value = Value;
+        this.schema = schema;
     }
-    public byte[] getcolumnValue() {
-        return columnValue;
-    }
-
-    public void setcolumnValue(byte [] bytes) {
-        columnValue = bytes;
-    }
-    public String getcolumnschema() {
-        return columnschema;
+    public byte[] getValue() {
+        return Value;
     }
 
-    public void setcolumnschema(String string) {
-        columnschema = string;
+    public void setValue(byte [] bytes) {
+        Value = bytes;
+    }
+    public String getschema() {
+        return schema;
+    }
+
+    public void setschema(String string) {
+        schema = string;
     }
     public boolean getend() {
         return end;
@@ -43,7 +43,9 @@ public class EndExpression implements  Expression {
     public void setboolean(boolean bool) {
         end = true;
     }
-
+    public String toString() {
+        return " s:"+schema+ " v: "+ new String(Value);
+    }
     @Override
     public void accept(ExpressionVisitor expressionVisitor) {
         //To change body of implemented methods use File | Settings | File Templates.
